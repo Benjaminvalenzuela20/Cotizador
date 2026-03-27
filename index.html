@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cotizador CoPiloto</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --azul:#0f2740;
+      --azul2:#153757;
+      --gris:#f3f4f6;
+      --gris2:#d1d5db;
+      --texto:#111827;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:#e9edf2;
+      color:var(--texto);
+      display:none;
+    }
+    .wrap{
+      display:grid;
+      grid-template-columns: 460px 1fr;
+      gap:20px;
+      padding:20px;
+      min-height:100vh;
+    }
+    .panel{
+      background:var(--azul);
+      color:#fff;
+      border-radius:14px;
+      padding:20px;
+      box-shadow:0 8px 24px rgba(0,0,0,.15);
+      overflow:auto;
+      max-height:calc(100vh - 40px);
+    }
+    .panel h1{
+      margin:0 0 10px;
+      font-size:24px;
+      font-weight:700;
+    }
+    .panel h2{
+      margin:22px 0 10px;
+      font-size:15px;
+      font-weight:700;
+      padding:8px 10px;
+      background:rgba(255,255,255,.08);
+      border-radius:8px;
+    }
+    .field{
+      margin-bottom:12px;
+    }
+    .field label{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      font-weight:700;
+    }
+    .field input,
+    .field select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:8px;
+      background:#fff;
+      color:#111;
+      font-size:14px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .row-3{
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    .checks{
+      display:grid;
+      gap:10px;
+      margin-top:8px;
+    }
+    .check-item{
+      background:rgba(255,255,255,.07);
+      padding:10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .check-grid{
+      display:grid;
+      grid-template-columns: 1fr 90px;
+      gap:10px;
+      align-items:end;
+      margin-top:8px;
+    }
+    .check-item label{
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+      cursor:pointer;
+      font-size:13px;
+      line-height:1.35;
+      margin:0;
+    }
+    .btns{
+      display:flex;
+      gap:10px;
+      margin-top:20px;
+    }
+    button{
+      border:none;
+      border-radius:10px;
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn-primary{
+      background:#ffffff;
+      color:var(--azul);
+      flex:1;
+    }
+    .btn-secondary{
+      background:#1d4e89;
+      color:#fff;
+      flex:1;
+    }
+    .preview-wrap{
+      overflow:auto;
+    }
+    #quote{
+      width:900px;
+      background:#fff;
+      margin:0 auto;
+      padding:28px 34px;
+      box-shadow:0 8px 24px rgba(0,0,0,.12);
+    }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:20px;
+    }
+    .title-block{
+      flex:1;
+    }
+    .title{
+      font-size:28px;
+      font-weight:700;
+      color:#111;
+      margin:0 0 10px;
+    }
+    .date{
+      font-size:14px;
+      margin-bottom:18px;
+    }
+    .client-name{
+      text-align:center;
+      font-size:22px;
+      font-weight:700;
+      margin:18px 0 10px;
+      letter-spacing:.4px;
+    }
+    .logos{
+      display:flex;
+      gap:18px;
+      align-items:center;
+    }
+    .logos img{
+      max-height:55px;
+      max-width:180px;
+      object-fit:contain;
+      display:block;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+    thead th{
+      border-bottom:2px solid #111;
+      padding:8px 6px;
+      text-align:left;
+      font-weight:700;
+    }
+    tbody td{
+      border-bottom:1px solid #d6d6d6;
+      padding:8px 6px;
+      vertical-align:top;
+    }
+    .num{text-align:right; white-space:nowrap;}
+    .center{text-align:center;}
+    .summary{
+      width:320px;
+      margin-left:auto;
+      margin-top:14px;
+      font-size:14px;
+    }
+    .summary .line{
+      display:flex;
+      justify-content:space-between;
+      padding:5px 0;
+    }
+    .summary .total{
+      font-size:20px;
+      font-weight:700;
+      border-top:2px solid #111;
+      margin-top:8px;
+      padding-top:8px;
+    }
+    .section-title{
+      font-weight:700;
+      margin:22px 0 8px;
+      font-size:15px;
+    }
+    .bullets{
+      font-size:13px;
+      line-height:1.45;
+      margin:0;
+      padding-left:18px;
+    }
+    .bullets li{margin-bottom:4px;}
+    .footer-text{
+      font-size:13px;
+      line-height:1.45;
+      margin-top:14px;
+    }
+    .small{
+      font-size:12px;
+      line-height:1.45;
+    }
+    .email{
+      margin-top:12px;
+      font-size:13px;
+    }
+    .muted{
+      color:#4b5563;
+    }
+    .quote-box{
+      border-top:1px solid #d1d5db;
+      margin-top:14px;
+      padding-top:14px;
+    }
+    @media (max-width: 1200px){
+      .wrap{grid-template-columns:1fr}
+      .panel{max-height:none}
+      #quote{width:100%}
+    }
+  </style>
+</head>
+<body>
+
+<script>
+(function() {
+  const PASSWORD = "Copiloto2026_";
+  const userPass = prompt("Ingrese la clave para acceder al cotizador:");
+
+  if (userPass === PASSWORD) {
+    document.body.style.display = "block";
+  } else {
+    document.body.innerHTML = "";
+  }
+})();
+</script>
+
+<div class="wrap">
+  <div class="panel">
+    <h1>Cotizador CoPiloto</h1>
+
+    <div class="field">
+      <label>Nombre del cliente</label>
+      <input id="cliente" type="text" placeholder="Ej: MAQRENT" />
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Fecha emisión</label>
+        <input id="fecha" type="date" />
+      </div>
+      <div class="field">
+        <label>Valor UF actual</label>
+        <input id="uf" type="number" step="0.01" value="39651.25" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Valor USD actual</label>
+      <input id="usd" type="number" step="0.01" value="887" />
+    </div>
+
+    <h2>1) Equipamiento KIT CoPiloto</h2>
+    <div class="row-3">
+      <div class="field">
+        <label>Servicio</label>
+        <select id="kit">
+          <option value="">Seleccionar</option>
+          <option value="150000">Kit CoPiloto GPS</option>
+          <option value="450000">Kit CoPiloto GPS + Telemetría</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input id="qtyKit" type="number" min="1" value="1" />
+      </div>
+      <div class="field">
+        <label>Descuento (%)</label>
+        <input id="dctoKit" type="number" min="0" max="100" value="0" />
+      </div>
+    </div>
+
+    <h2>2) Adicionales</h2>
+    <div class="checks">
+      <div class="check-item">
+        <div class="check-grid">
+          <label>
+            <input type="checkbox" class="add-check" data-type="clp" data-value="200000" data-label="(+) Adicional: ID Conductor (RFID)">
+            <span>(+) Adicional: ID Conductor (RFID)</span>
+          </label>
+          <div class="field" style="margin:0;">
+            <label style="font-size:12px;">Cantidad</label>
+            <input type="number" min="1" value="1" class="add-qty" />
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-grid">
+          <label>
+            <input type="checkbox" class="add-check" data-type="usd" data-value="130" data-label="(+) IBUTTON Sistema Identificación">
+            <span>(+) IBUTTON Sistema Identificación</span>
+          </label>
+          <div class="field" style="margin:0;">
+            <label style="font-size:12px;">Cantidad</label>
+            <input type="number" min="1" value="1" class="add-qty" />
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-grid">
+          <label>
+            <input type="checkbox" class="add-check" data-type="clp" data-value="90000" data-label="(+) Adicional: Parada Segura Remota">
+            <span>(+) Adicional: Parada Segura Remota</span>
+          </label>
+          <div class="field" style="margin:0;">
+            <label style="font-size:12px;">Cantidad</label>
+            <input type="number" min="1" value="1" class="add-qty" />
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-grid">
+          <label>
+            <input type="checkbox" class="add-check" data-type="clp" data-value="500000" data-label="(+) Adicional: Cámara de fatiga y somnolencia">
+            <span>(+) Adicional: Cámara de fatiga y somnolencia</span>
+          </label>
+          <div class="field" style="margin:0;">
+            <label style="font-size:12px;">Cantidad</label>
+            <input type="number" min="1" value="1" class="add-qty" />
+          </div>
+        </div>
+      </div>
+
+      <div class="check-item">
+        <div class="check-grid">
+          <label>
+            <input type="checkbox" class="add-check" data-type="clp" data-value="8000" data-label="(+) Tarjetas Adicionales (para RFID)">
+            <span>(+) Tarjetas Adicionales (para RFID)</span>
+          </label>
+          <div class="field" style="margin:0;">
+            <label style="font-size:12px;">Cantidad</label>
+            <input type="number" min="1" value="1" class="add-qty" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>Descuento adicionales (%)</label>
+      <input id="dctoAdd" type="number" min="0" max="100" value="0" />
+    </div>
+
+    <h2>3) Instalación KIT CoPiloto</h2>
+    <div class="row-3">
+      <div class="field">
+        <label>Instalación</label>
+        <select id="instalacion">
+          <option value="">Seleccionar</option>
+          <option value="santiago">Instalación en Santiago (Técnicos CoPiloto)</option>
+          <option value="region">Instalación en Región (Técnicos CoPiloto)</option>
+          <option value="taller">Instalación en Taller Kaufmann (Cotizar en Sucursal)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input id="qtyInst" type="number" min="1" value="1" />
+      </div>
+      <div class="field">
+        <label>Descuento (%)</label>
+        <input id="dctoInst" type="number" min="0" max="100" value="0" />
+      </div>
+    </div>
+
+    <h2>4) Activación Membresía Plataforma CoPiloto</h2>
+    <div class="row-3">
+      <div class="field">
+        <label>Plan membresía</label>
+        <select id="membresia">
+          <option value="">Seleccionar</option>
+          <option value="198256" data-name="Prepago 12 Meses Membresía GPS Starter">Prepago 12 Meses Membresía GPS Starter</option>
+          <option value="277559" data-name="Prepago 12 Meses Membresía GPS Plus">Prepago 12 Meses Membresía GPS Plus</option>
+          <option value="cotizar" data-name="Prepago 12 Meses Membresía GPS Corporate">Prepago 12 Meses Membresía GPS Corporate</option>
+          <option value="356861" data-name="Prepago 12 Meses Membresía GPS + Telemetría Starter">Prepago 12 Meses Membresía GPS + Telemetría Starter</option>
+          <option value="475815" data-name="Prepago 12 Meses Membresía GPS + Telemetría Plus">Prepago 12 Meses Membresía GPS + Telemetría Plus</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cantidad</label>
+        <input id="qtyMem" type="number" min="1" value="1" />
+      </div>
+      <div class="field">
+        <label>Descuento (%)</label>
+        <input id="dctoMem" type="number" min="0" max="100" value="0" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Plazo membresía</label>
+      <select id="meses">
+        <option value="12">12 meses</option>
+        <option value="24">24 meses</option>
+        <option value="36">36 meses</option>
+        <option value="48">48 meses</option>
+      </select>
+    </div>
+
+    <div class="btns">
+      <button class="btn-secondary" id="btnVista">Actualizar vista previa</button>
+      <button class="btn-primary" id="btnPdf">Descargar PDF</button>
+    </div>
+  </div>
+
+  <div class="preview-wrap">
+    <div id="quote">
+      <div class="header">
+        <div class="title-block">
+          <div class="title">Cotización Negocios Digitales</div>
+          <div class="date" id="previewFecha">Fecha emisión: -</div>
+        </div>
+        <div class="logos">
+          <img src="Logo1.png" alt="CoPiloto" />
+          <img src="Logo2.png" alt="Connect" />
+        </div>
+      </div>
+
+      <div class="client-name" id="previewCliente">CLIENTE</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:55px;">ÍTEM</th>
+            <th style="width:80px;">UNIDAD</th>
+            <th>DESCRIPCIÓN</th>
+            <th class="center" style="width:85px;">CANTIDAD</th>
+            <th class="num" style="width:150px;">PRECIO UNITARIO (CLP)</th>
+            <th class="num" style="width:140px;">SUB-TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyCotizacion"></tbody>
+      </table>
+
+      <div class="summary">
+        <div class="line"><span>Sub-Total Neto</span><strong id="subTotalTxt">$ 0</strong></div>
+        <div class="line"><span>IVA (19%)</span><strong id="ivaTxt">$ 0</strong></div>
+        <div class="line total"><span>Total</span><strong id="totalTxt">$ 0</strong></div>
+      </div>
+
+      <div class="section-title">Condiciones Comerciales</div>
+      <ul class="bullets">
+        <li>Los precios están expresados en CLP y son calculados en base al valor UF del día de la cotización.</li>
+        <li>Las instalaciones en terreno son realizadas por técnicos especialistas CoPiloto, duración 2 horas por vehículo.</li>
+        <li>Instalación en regiones no incluye interior de faena, cotizar de forma independiente según lugar de instalación.</li>
+        <li>La instalación en taller Kaufmann depende de la disponibilidad del mismo.</li>
+      </ul>
+
+      <div class="section-title">Datos de Facturación:</div>
+      <ul class="bullets">
+        <li>Comercial Kaufmann S.A</li>
+        <li>Rut: 96.572.360-9</li>
+        <li>Dirección: Avenida Gladys Marín 5830, Estación Central</li>
+        <li>Fono: 2 2720 2000</li>
+      </ul>
+
+      <div class="footer-text">
+        Atentamente,<br>
+        Negocios Digitales Grupo Kaufmann
+      </div>
+
+      <div class="footer-text">
+        Vigencia: 30 días desde la fecha de emisión.
+      </div>
+
+      <div class="quote-box small">
+        Esta cotización es válida por 30 días a partir de la fecha de emisión e incluye únicamente los productos o servicios descritos. Cualquier elemento adicional estará sujeto a una nueva negociación.
+        <br><br>
+        Los productos o servicios serán entregados en un plazo acordado entre ambas partes que requiere la coordinación de instalación y activación. Si corresponde, los costos de transporte se incluirán de manera separada.
+        <br><br>
+        Se otorga garantía de instalación por 30 días para defectos de fabricación o calidad. Cambios o devoluciones deben ser notificados dentro de 10 días posteriores a la entrega y pueden estar sujetos a cargos adicionales según el caso. No considera mano de obra en la devolución.
+        <br><br>
+        CoPiloto es un ecosistema integral que combina telemetría avanzada, monitoreo GPS y análisis para maximizar la eficiencia, reducir costos y mejorar la seguridad en le transporte. Compatible con vehículos multimarca diésel, híbridas y eléctricas, ofrece reportes personalizados y alertas configurables, transformando datos en decisiones inteligentes y rentables.
+      </div>
+
+      <div class="email muted">copiloto@grupokaufmann.com</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function formatCLP(value){
+    return '$ ' + Math.round(value).toLocaleString('es-CL');
+  }
+
+  function parsePercent(id){
+    const v = parseFloat($(id).value);
+    if (isNaN(v) || v < 0) return 0;
+    return v / 100;
+  }
+
+  function formatFecha(fechaStr){
+    if(!fechaStr) return '-';
+    const [y,m,d] = fechaStr.split('-');
+    return `${d}-${m}-${y}`;
+  }
+
+  function withDiscountLabel(text, pct){
+    const n = parseFloat(pct);
+    if(isNaN(n) || n <= 0) return text;
+    return `${text} (${n}% dcto)`;
+  }
+
+  function getInstalacionData(){
+    const uf = parseFloat($('uf').value) || 0;
+    const tipo = $('instalacion').value;
+
+    if(tipo === 'santiago'){
+      return {
+        label:'Instalación en Santiago (Técnicos CoPiloto)',
+        price: uf * 1.5,
+        cotizar:false
+      };
+    }
+    if(tipo === 'region'){
+      return {
+        label:'Instalación en Región (Técnicos CoPiloto)',
+        price: uf * 3.5,
+        cotizar:false
+      };
+    }
+    if(tipo === 'taller'){
+      return {
+        label:'Instalación en Taller Kaufmann (Cotizar en Sucursal)',
+        price: 0,
+        cotizar:true
+      };
+    }
+    return null;
+  }
+
+  function getMembershipData(){
+    const sel = $('membresia');
+    const months = parseInt($('meses').value || '12', 10);
+    const multiplier = months / 12;
+    const val = sel.value;
+
+    if(!val) return null;
+
+    const originalName = sel.options[sel.selectedIndex].dataset.name || sel.options[sel.selectedIndex].text;
+    const name = originalName.replace('12 Meses', `${months} Meses`);
+
+    if(val === 'cotizar'){
+      return {
+        label:name,
+        price:0,
+        cotizar:true
+      };
+    }
+
+    return {
+      label:name,
+      price: parseFloat(val) * multiplier,
+      cotizar:false
+    };
+  }
+
+  function buildRows(){
+    const rows = [];
+    const dctoKit = parsePercent('dctoKit');
+    const dctoAdd = parsePercent('dctoAdd');
+    const dctoInst = parsePercent('dctoInst');
+    const dctoMem = parsePercent('dctoMem');
+    const usd = parseFloat($('usd').value) || 0;
+
+    const qtyKit = Math.max(1, parseInt($('qtyKit').value || '1', 10));
+    const qtyInst = Math.max(1, parseInt($('qtyInst').value || '1', 10));
+    const qtyMem = Math.max(1, parseInt($('qtyMem').value || '1', 10));
+
+    const kitSel = $('kit');
+    if(kitSel.value){
+      const base = parseFloat(kitSel.value);
+      const finalPrice = base * (1 - dctoKit);
+      rows.push({
+        unidad:'Unidad',
+        descripcion: withDiscountLabel(kitSel.options[kitSel.selectedIndex].text, $('dctoKit').value),
+        cantidad: qtyKit,
+        unitario: finalPrice,
+        subtotal: finalPrice * qtyKit,
+        cotizar:false
+      });
+    }
+
+    const addChecks = document.querySelectorAll('.add-check');
+    const addQtys = document.querySelectorAll('.add-qty');
+
+    addChecks.forEach((chk, index) => {
+      if(!chk.checked) return;
+
+      const qty = Math.max(1, parseInt(addQtys[index].value || '1', 10));
+      let base = parseFloat(chk.dataset.value);
+
+      if(chk.dataset.type === 'usd'){
+        base = base * usd;
+      }
+
+      const finalPrice = base * (1 - dctoAdd);
+
+      rows.push({
+        unidad:'Unidad',
+        descripcion: withDiscountLabel(chk.dataset.label, $('dctoAdd').value),
+        cantidad: qty,
+        unitario: finalPrice,
+        subtotal: finalPrice * qty,
+        cotizar:false
+      });
+    });
+
+    const inst = getInstalacionData();
+    if(inst){
+      if(inst.cotizar){
+        rows.push({
+          unidad:'Unidad',
+          descripcion: withDiscountLabel(inst.label, $('dctoInst').value),
+          cantidad: qtyInst,
+          unitario:'-',
+          subtotal:'-',
+          cotizar:true
+        });
+      } else {
+        const finalPrice = inst.price * (1 - dctoInst);
+        rows.push({
+          unidad:'Unidad',
+          descripcion: withDiscountLabel(inst.label, $('dctoInst').value),
+          cantidad: qtyInst,
+          unitario: finalPrice,
+          subtotal: finalPrice * qtyInst,
+          cotizar:false
+        });
+      }
+    }
+
+    const mem = getMembershipData();
+    if(mem){
+      if(mem.cotizar){
+        rows.push({
+          unidad:'Unidad',
+          descripcion: withDiscountLabel(mem.label, $('dctoMem').value),
+          cantidad: qtyMem,
+          unitario:'COTIZAR',
+          subtotal:'COTIZAR',
+          cotizar:true,
+          isCotizarText:true
+        });
+      } else {
+        const finalPrice = mem.price * (1 - dctoMem);
+        rows.push({
+          unidad:'Unidad',
+          descripcion: withDiscountLabel(mem.label, $('dctoMem').value),
+          cantidad: qtyMem,
+          unitario: finalPrice,
+          subtotal: finalPrice * qtyMem,
+          cotizar:false
+        });
+      }
+    }
+
+    return rows;
+  }
+
+  function renderQuote(){
+    const cliente = $('cliente').value.trim() || 'CLIENTE';
+    const fecha = $('fecha').value;
+
+    $('previewCliente').textContent = cliente.toUpperCase();
+    $('previewFecha').textContent = 'Fecha emisión: ' + formatFecha(fecha);
+
+    const rows = buildRows();
+    const tbody = $('tbodyCotizacion');
+    tbody.innerHTML = '';
+
+    let subtotalNeto = 0;
+    let hasCotizar = false;
+
+    rows.forEach((r, idx) => {
+      const tr = document.createElement('tr');
+
+      const unitarioTxt = r.cotizar
+        ? (r.isCotizarText ? 'COTIZAR' : '-')
+        : formatCLP(r.unitario);
+
+      const subtotalTxt = r.cotizar
+        ? (r.isCotizarText ? 'COTIZAR' : '-')
+        : formatCLP(r.subtotal);
+
+      if(!r.cotizar){
+        subtotalNeto += r.subtotal;
+      } else if(r.isCotizarText){
+        hasCotizar = true;
+      }
+
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${r.unidad}</td>
+        <td>${r.descripcion}</td>
+        <td class="center">${r.cantidad}</td>
+        <td class="num">${unitarioTxt}</td>
+        <td class="num">${subtotalTxt}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if(rows.length === 0){
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="center muted" style="padding:18px;">Sin ítems seleccionados</td>
+        </tr>
+      `;
+    }
+
+    if(hasCotizar){
+      $('subTotalTxt').textContent = 'COTIZAR';
+      $('ivaTxt').textContent = 'COTIZAR';
+      $('totalTxt').textContent = 'COTIZAR';
+    } else {
+      const iva = subtotalNeto * 0.19;
+      const total = subtotalNeto + iva;
+      $('subTotalTxt').textContent = formatCLP(subtotalNeto);
+      $('ivaTxt').textContent = formatCLP(iva);
+      $('totalTxt').textContent = formatCLP(total);
+    }
+  }
+
+  async function descargarPDF(){
+    renderQuote();
+
+    const element = document.getElementById('quote');
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth - 12;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 6;
+
+    pdf.addImage(imgData, 'PNG', 6, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - 12);
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 6;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 6, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - 12);
+    }
+
+    const cliente = $('cliente').value.trim() || 'cliente';
+    pdf.save(`Cotizacion_${cliente.replace(/\s+/g, '_')}.pdf`);
+  }
+
+  function setToday(){
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2,'0');
+    const d = String(today.getDate()).padStart(2,'0');
+    $('fecha').value = `${y}-${m}-${d}`;
+  }
+
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', renderQuote);
+    el.addEventListener('change', renderQuote);
+  });
+
+  $('btnVista').addEventListener('click', renderQuote);
+  $('btnPdf').addEventListener('click', descargarPDF);
+
+  setToday();
+  renderQuote();
+</script>
+
+</body>
+</html>
